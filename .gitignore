@@ -11,3 +11,6 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
+.bruin.yml
+
+notebook_tuto_Ask_the_US_Economy.ipynb
