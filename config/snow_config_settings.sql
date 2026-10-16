@@ -10,63 +10,37 @@
 
 USE ROLE ACCOUNTADMIN;
 
-
--- ============================================================
 -- 1. COMPUTE RESOURCES
--- ============================================================
 CREATE WAREHOUSE IF NOT EXISTS COMPUTE_WH
     WAREHOUSE_SIZE = 'XSMALL'
     AUTO_SUSPEND = 60
     AUTO_RESUME = TRUE
     INITIALLY_SUSPENDED = TRUE;
 
-
--- ============================================================
 -- 2. PROJECT DATABASE & SCHEMAS
--- ============================================================
 CREATE DATABASE IF NOT EXISTS ECON_DB;
 -- CREATE SCHEMA IF NOT EXISTS ECON_DB.RAW;
 -- CREATE SCHEMA IF NOT EXISTS ECON_DB.STAGING;
 CREATE SCHEMA IF NOT EXISTS ECON_DB.ANALYTICS;
 
-
--- ============================================================
 -- 4. PROJECT ROLE
--- ============================================================
 CREATE ROLE IF NOT EXISTS ECON_ROLE;
 
-
--- ============================================================
--- 5. DATABASE, SCHEMA ACCESS & PRI`VILEGES
--- ============================================================
-
+-- 5. DATABASE, SCHEMA ACCESS & PRIVILEGES
 -- Allow the project role to access its database.
-
 GRANT USAGE ON DATABASE ECON_DB TO ROLE ECON_ROLE;
 GRANT USAGE ON SCHEMA ECON_DB.ANALYTICS TO ROLE ECON_ROLE;
 
 -- Allow the role to create tables in each layer.
-
 GRANT CREATE TABLE ON SCHEMA ECON_DB.ANALYTICS TO ROLE ECON_ROLE;
 
 
 -- Allow creation of Dynamic Tables in the analytics layer.
-
 GRANT CREATE DYNAMIC TABLE ON SCHEMA ECON_DB.ANALYTICS TO ROLE ECON_ROLE;
 
 
--- ============================================================
 -- 7. WAREHOUSE ACCESS
--- ============================================================
-
--- USAGE allows the role to execute queries using the warehouse.
--- It does not grant permission to administer the warehouse.
-
 GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE ECON_ROLE;
 
-
--- ============================================================
 -- 8. EXTERNAL SHARED DATA
--- ============================================================
-
 GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE_PUBLIC_DATA_FREE TO ROLE ECON_ROLE;
