@@ -4,7 +4,7 @@ from config.utils.snowflake_connection import get_snowflake_session
 
 # Chemin du fichier SQL
 PROJECT_ROOT = Path(__file__).resolve().parent
-SQL_FILE = PROJECT_ROOT / "src" / "dynamic_table_pipeline.sql"
+SQL_FILE = PROJECT_ROOT / "src" / "dynamic_table.sql"
 
 def main():
     session = get_snowflake_session()
@@ -13,11 +13,7 @@ def main():
         sql_script = SQL_FILE.read_text(encoding="utf-8")
 
         # Exécuter chaque instruction SQL séparément
-        statements = [
-            statement.strip()
-            for statement in sql_script.split(";")
-            if statement.strip()
-        ]
+        statements = [statement.strip() for statement in sql_script.split(";") if statement.strip()]
 
         for statement in statements:
             print(f"Exécution : {statement[:80]}...")
