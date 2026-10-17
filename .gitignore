@@ -1,16 +1,4 @@
-# Secrets
-.env
-config/.env
-*.pem
-*.key
-
-# Python
 .venv/
 __pycache__/
-*.py[cod]
-
-# Jupyter
-.ipynb_checkpoints/
-.bruin.yml
-
-notebook_tuto_Ask_the_US_Economy.ipynb
+*.pyc
+.env

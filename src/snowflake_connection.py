@@ -4,19 +4,25 @@ from pathlib import Path
 from dotenv import load_dotenv
 from snowflake.snowpark import Session
 
-# Chemin vers le .env
-CONFIG_DIR = Path(__file__).resolve().parents[1]
-load_dotenv(CONFIG_DIR / ".env")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env")
+
+REQUIRED_VARS = [
+    "SNOWFLAKE_ACCOUNT",
+    "SNOWFLAKE_USER",
+    "SNOWFLAKE_PAT",
+    "SNOWFLAKE_ROLE",
+    "SNOWFLAKE_WAREHOUSE",
+    "SNOWFLAKE_DATABASE",
+    "SNOWFLAKE_SCHEMA",
+]
 
 
 def get_snowflake_session() -> Session:
-    """
-    Crée et retourne une session Snowpark en utilisant les paramètres de connexion
-    définis dans le fichier .env.
-
-    Returns:
-        Session: Une instance de session Snowpark.
-    """
+    """Crée une session Snowpark à partir des variables du fichier .env."""
+    missing = [v for v in REQUIRED_VARS if not os.getenv(v)]
+    if missing:
+        raise EnvironmentError(f"Variables manquantes dans .env : {', '.join(missing)}")
 
     connection_params = {
         "account": os.environ["SNOWFLAKE_ACCOUNT"],
@@ -27,5 +33,4 @@ def get_snowflake_session() -> Session:
         "database": os.environ["SNOWFLAKE_DATABASE"],
         "schema": os.environ["SNOWFLAKE_SCHEMA"],
     }
-
     return Session.builder.configs(connection_params).create()
