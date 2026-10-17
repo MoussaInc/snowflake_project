@@ -26,6 +26,7 @@ def collect_files(targets: list[str]) -> list[Path]:
     """
     if not targets:
         targets = list(STAGES)
+
     files = []
     for target in targets:
         if target in STAGES:
@@ -50,6 +51,7 @@ def run_file(session, sql_file: Path) -> None:
         statement = statement.strip().rstrip(";")
         if not statement:
             continue
+
         print(f"Exécution : {' '.join(statement.split())[:80]}...")
         rows = session.sql(statement).collect()
         print(f"Terminé ({len(rows)} lignes).")
@@ -66,6 +68,7 @@ def main(targets: list[str]) -> None:
     files = collect_files(targets)
     if not files:
         sys.exit("Aucun fichier SQL trouvé.")
+        
     session = get_snowflake_session()
 
     try:

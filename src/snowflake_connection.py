@@ -19,7 +19,12 @@ REQUIRED_VARS = [
 
 
 def get_snowflake_session() -> Session:
-    """Crée une session Snowpark à partir des variables du fichier .env."""
+    """
+    Returns:
+        Session: Une instance de session Snowpark.
+    Raises:
+        EnvironmentError: Si certaines variables requises sont manquantes dans le fichier .env.
+    """
     missing = [v for v in REQUIRED_VARS if not os.getenv(v)]
     if missing:
         raise EnvironmentError(f"Variables manquantes dans .env : {', '.join(missing)}")
