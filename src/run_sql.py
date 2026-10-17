@@ -2,14 +2,16 @@ import sys
 from io import StringIO
 from pathlib import Path
 
+from jupyter_server import files
 from snowflake.connector.util_text import split_statements
 
 from src.snowflake_connection import get_snowflake_session
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STAGES = {
     "setup": PROJECT_ROOT / "sql" / "setup",
     "models": PROJECT_ROOT / "sql" / "models",
+    "ops": PROJECT_ROOT / "sql" / "ops",
     "analytics": PROJECT_ROOT / "sql" / "analytics",
     "tests": PROJECT_ROOT / "tests",
 }
@@ -62,6 +64,8 @@ def main(targets: list[str]) -> None:
     """
 
     files = collect_files(targets)
+    if not files:
+        sys.exit("Aucun fichier SQL trouvé.")
     session = get_snowflake_session()
 
     try:

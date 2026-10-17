@@ -1,6 +1,6 @@
 import os
 
-from config.utils.snowflake_connection import get_snowflake_session
+from src.snowflake_connection import get_snowflake_session
 
 
 try:
