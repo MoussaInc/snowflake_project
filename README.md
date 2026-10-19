@@ -74,6 +74,7 @@ sql/
 └── analytics/   requêtes d'analyse
 src/             connexion Snowpark, prototype, exécuteur SQL
 tests/           contrôles de qualité (data_quality.sql, run_dq.sql)
+streamlit/       dashboard Streamlit in Snowflake
 .github/         workflow de déploiement
 ```
 
@@ -95,6 +96,9 @@ Secrets GitHub à créer (*Settings > Secrets and variables > Actions*) : les 7 
 
 
 ## Aperçu
+
+**Dashboard streamlit**
+![Dashboard](docs/us_economy_dashboard.png)
 
 **Lineage de la Dynamic Table**
 ![Lineage](docs/lineage.png)
