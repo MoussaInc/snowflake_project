@@ -92,3 +92,12 @@ SELECT * FROM TABLE(ECON_DB.INFORMATION_SCHEMA.TASK_HISTORY()) ORDER BY SCHEDULE
 
 Un push sur `main` lance `python -m src.run_sql models ops tests/run_dq.sql`.
 Secrets GitHub à créer (*Settings > Secrets and variables > Actions*) : les 7 variables du `.env`.
+
+
+## Aperçu
+
+**Lineage de la Dynamic Table**
+![Lineage](docs/lineage.png)
+
+**Historique de rafraîchissement**
+![Rafraîchissement](docs/refresh_table.png)
