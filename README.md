@@ -1,107 +1,85 @@
-# Snowflake Economic Indicators
+# US Economy: pipeline Snowflake déployé en CI/CD
 
-Pipeline Snowflake qui consolide trois indicateurs économiques américains (CPI, taux de chômage, taux hypothécaire 30 ans) dans une **Dynamic Table**, les analyse en SQL et contrôle leur qualité automatiquement.
+CPI, chômage, taux hypothécaire 30 ans : trois indicateurs américains, deux sources, **une seule table à jour toutes les heures**, des analyses SQL prêtes à l'emploi et des tests de qualité qui tournent seuls chaque jour.
 
-**Sources** : `SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE`
-- `FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES` (CPI, chômage)
-- `FREDDIE_MAC_HOUSING_TIMESERIES` (taux hypothécaire)
-
-**Cible** : `ECON_DB.ANALYTICS.ECONOMIC_DYNAMIC_TABLE` (`TARGET_LAG = 1 hour`)
-
-## Architecture
+Tout est du code versionné : un `git push` déploie, Snowflake exécute et planifie.
 
 ```
-Git (code) ──push──> GitHub Actions ──run_sql.py──> Snowflake
-                                                     ├─ Dynamic Table (rafraîchie toutes les heures)
-                                                     ├─ Procédure RUN_DATA_QUALITY_TESTS
-                                                     └─ Task DQ_TASK (tests chaque jour à 7h, Europe/Paris)
+Git ──push──> GitHub Actions ──> Snowflake
+                                  ├─ Dynamic Table      rafraîchie toutes les heures
+                                  ├─ Procédure DQ       tests de qualité
+                                  └─ Task DQ_TASK       tests chaque jour à 7h (Paris)
 ```
 
-Le code vit dans Git. Snowflake exécute et planifie. Ne modifiez pas les objets directement dans Snowsight.
+## Données
+
+| Indicateur | Source (`SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE`) | Fréquence |
+|---|---|---|
+| CPI, chômage | `FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES` | mensuelle |
+| Taux hypothécaire 30 ans | `FREDDIE_MAC_HOUSING_TIMESERIES` | hebdomadaire |
+
+Résultat : `ECON_DB.ANALYTICS.ECONOMIC_DYNAMIC_TABLE` (`TARGET_LAG = 1 hour`).
+
+Analyses fournies (`sql/analytics/`) : inflation annuelle (CPI YoY), variation annuelle du chômage, moyenne mobile des taux, dernière valeur par indicateur.
+
+## Choix de conception
+
+- **Dynamic Table** plutôt qu'un job de refresh : Snowflake gère la fraîcheur, aucun orchestrateur externe.
+- **Une Task, pas un DAG** : un seul traitement planifié (les tests), le reste est déclaratif.
+- **Tests bloquants** : la procédure `RUN_DATA_QUALITY_TESTS` lève une erreur si un test échoue. Le déploiement passe au rouge, la Task aussi.
+- **Droits minimaux** : l'initialisation (`setup`) est faite une fois par un admin, le déploiement tourne avec `ECON_ROLE`.
+- **Aucun secret dans Git** : identifiants dans `.env` en local, dans les secrets GitHub en CI.
+
+## Démarrage
+
+Prérequis : Python 3.12, un compte Snowflake, un utilisateur avec le rôle `ECON_ROLE` et un PAT (la network policy doit autoriser votre IP).
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env        # puis renseigner les 7 variables SNOWFLAKE_*
+```
+
+Depuis la racine du projet :
+
+```bash
+# 1. Initialisation, une seule fois (utilisateur autorisé à utiliser ACCOUNTADMIN)
+python -m src.run_sql setup
+
+# 2. Déploiement : Dynamic Table, procédure, Task, tests
+python -m src.run_sql models ops tests/run_dq.sql
+```
+
+Autres commandes :
+
+```bash
+python -m src.prototype_script                       # prototype Snowpark, lecture seule
+python -m src.run_sql analytics                      # requêtes d'analyse
+python -m src.run_sql tests                          # contrôles de qualité
+python -m src.run_sql sql/models/dynamic_table.sql   # un fichier précis
+```
+
+Les étapes s'exécutent dans l'ordre demandé, les fichiers par ordre alphabétique (`01_`, `02_`...). Le script s'arrête à la première erreur.
 
 ## Structure
 
 ```
-.
-├── sql/
-│   ├── setup/        # warehouse, base, schéma, rôle, droits (lancé une seule fois)
-│   ├── models/       # dynamic_table.sql
-│   ├── ops/          # procédure de tests + Task planifiée
-│   └── analytics/    # analytics_queries.sql (CPI YoY, chômage, moyenne mobile...)
-├── src/
-│   ├── snowflake_connection.py   # session Snowpark depuis .env
-│   ├── prototype_script.py       # prototype Snowpark avant la Dynamic Table
-│   └── run_sql.py                # exécute les scripts SQL
-├── tests/
-│   ├── data_quality.sql          # requêtes de contrôle et de monitoring
-│   └── run_dq.sql                # appelle la procédure de tests (bloquant en CI)
-├── .github/workflows/            # déploiement CI/CD
-├── .env.example
-└── requirements.txt
+sql/
+├── setup/       warehouse, base, schéma, rôle, droits
+├── models/      Dynamic Table
+├── ops/         procédure de tests + Task
+└── analytics/   requêtes d'analyse
+src/             connexion Snowpark, prototype, exécuteur SQL
+tests/           contrôles de qualité (data_quality.sql, run_dq.sql)
+.github/         workflow de déploiement
 ```
-
-## Prérequis
-
-- Python 3.12
-- Un compte Snowflake et un utilisateur ayant le rôle `ECON_ROLE`
-- Un Programmatic Access Token (PAT) ; une network policy doit autoriser votre IP
-
-## Installation
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-Renseignez le `.env` (jamais commité) :
-
-```
-SNOWFLAKE_ACCOUNT=orgname-accountname
-SNOWFLAKE_USER=
-SNOWFLAKE_PAT=
-SNOWFLAKE_ROLE=
-SNOWFLAKE_WAREHOUSE=
-SNOWFLAKE_DATABASE=
-SNOWFLAKE_SCHEMA=
-```
-
-## Utilisation
-
-Toutes les commandes se lancent depuis la racine du projet.
-
-**1. Initialisation (une seule fois, à la main, rôle administrateur)**
-
-```bash
-python -m src.run_sql setup
-```
-
-Crée le warehouse, la base, le schéma, le rôle `ECON_ROLE` et ses droits. Cette étape n'est **pas** exécutée par le CI.
-
-**2. Déploiement (avec `ECON_ROLE`)**
-
-```bash
-python -m src.run_sql models ops tests/run_dq.sql
-```
-
-**Autres commandes**
-
-```bash
-python -m src.prototype_script                  # prototype, sans écriture
-python -m src.run_sql analytics                 # requêtes d'analyse
-python -m src.run_sql tests                     # contrôles de qualité
-python -m src.run_sql sql/models/dynamic_table.sql   # un fichier précis
-```
-
-Le script s'arrête à la première erreur. Les fichiers d'une étape s'exécutent par ordre alphabétique (`01_`, `02_`...).
 
 ## Qualité des données
 
-- **`RUN_DATA_QUALITY_TESTS`** : procédure Snowflake qui lève une erreur si un test échoue (unicité date/indicateur, CPI > 0, taux entre 0 et 1). Elle est appelée chaque jour par la Task `DQ_TASK` et à chaque déploiement (`tests/run_dq.sql`).
-- **`tests/data_quality.sql`** : contrôles complémentaires. Les tests 1 et 2 doivent retourner 0 ligne, le test 3 donne la complétude par indicateur, le test 4 liste les trous dans les séries.
+- **Bloquants** (`RUN_DATA_QUALITY_TESTS`) : une observation par date et indicateur, CPI > 0, taux entre 0 et 1.
+- **Monitoring** (`tests/data_quality.sql`) : complétude par indicateur et trous dans les séries.
 
-Suivi des exécutions de la Task :
+Suivi de la Task :
 
 ```sql
 SELECT * FROM TABLE(ECON_DB.INFORMATION_SCHEMA.TASK_HISTORY()) ORDER BY SCHEDULED_TIME DESC;
@@ -109,12 +87,11 @@ SELECT * FROM TABLE(ECON_DB.INFORMATION_SCHEMA.TASK_HISTORY()) ORDER BY SCHEDULE
 
 ## CI/CD
 
-À chaque push sur `main`, GitHub Actions exécute `python -m src.run_sql models ops tests/run_dq.sql`.
+Un push sur `main` lance `python -m src.run_sql models ops tests/run_dq.sql`.
+Secrets GitHub à créer (*Settings > Secrets and variables > Actions*) : les 7 variables du `.env`.
 
-Secrets à créer dans *Settings > Secrets and variables > Actions* : les 7 variables du `.env`.
+## À savoir
 
-## Notes
-
-- Le taux hypothécaire est hebdomadaire, le CPI et le chômage sont mensuels : agréger au mois pour les comparer.
-- Les dernières valeurs de CPI et de chômage sont `NULL` tant que le mois n'est pas publié. Octobre 2025 est un trou connu de la source (le test 4 le signale).
-- Les taux sont stockés en décimal (`0.0649` = 6,49 %).
+- Taux hypothécaire hebdomadaire, CPI et chômage mensuels : agréger au mois pour les comparer.
+- Les derniers mois de CPI et de chômage sont `NULL` tant qu'ils ne sont pas publiés. Octobre 2025 est un trou connu de la source.
+- Les taux sont en décimal (`0.0649` = 6,49 %).
