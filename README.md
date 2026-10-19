@@ -1,5 +1,7 @@
 # US Economy: pipeline Snowflake déployé en CI/CD
 
+![deploy](https://github.com/MoussaInc/snowflake_project/actions/workflows/deploy.yml/badge.svg)
+
 CPI, chômage, taux hypothécaire 30 ans : trois indicateurs américains, deux sources, **une seule table à jour toutes les heures**, des analyses SQL prêtes à l'emploi et des tests de qualité qui tournent seuls chaque jour.
 
 Tout est du code versionné : un `git push` déploie, Snowflake exécute et planifie.
