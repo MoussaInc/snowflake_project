@@ -98,7 +98,7 @@ Secrets GitHub à créer (*Settings > Secrets and variables > Actions*) : les 7 
 ## Aperçu
 
 **Dashboard streamlit**
-![Dashboard](docs/img/dashboard.png)
+![Dashboard](docs/us_economy_dashboard.png)
 
 **Lineage de la Dynamic Table**
 ![Lineage](docs/lineage.png)
