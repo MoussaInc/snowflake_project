@@ -1,7 +1,6 @@
 -- ============================================================
 -- PROJECT : US ECONOMY
 -- PURPOSE : Initialize Snowflake resources and permissions
--- ============================================================
 -- Run ONCE, manually, with an administrative role. NOT run by CI.
 
 USE ROLE ACCOUNTADMIN;
