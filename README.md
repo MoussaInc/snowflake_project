@@ -1,8 +1,9 @@
 # US Economy: pipeline Snowflake déployé en CI/CD
 
 ![deploy](https://github.com/MoussaInc/snowflake_project/actions/workflows/deploy.yml/badge.svg)
+![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?logo=snowflake&logoColor=white)
 
-CPI, chômage, taux hypothécaire 30 ans : trois indicateurs américains, deux sources, **une seule table à jour toutes les heures**, des analyses SQL prêtes à l'emploi et des tests de qualité qui tournent seuls chaque jour.
+CPI, chômage, taux hypothécaire 30 ans : trois indicateurs américains, deux sources, **une seule table à jour toutes les heures**, des analyses SQL prêtes à l'emploi, un dashboard et des tests de qualité qui tournent seuls chaque jour.
 
 Tout est du code versionné : un `git push` déploie, Snowflake exécute et planifie.
 
@@ -10,8 +11,11 @@ Tout est du code versionné : un `git push` déploie, Snowflake exécute et plan
 Git ──push──> GitHub Actions ──> Snowflake
                                   ├─ Dynamic Table      rafraîchie toutes les heures
                                   ├─ Procédure DQ       tests de qualité
-                                  └─ Task DQ_TASK       tests chaque jour à 7h
+                                  ├─ Task DQ_TASK       tests chaque jour à 7h
+                                  └─ Dashboard          Streamlit in Snowflake
 ```
+
+> Le dashboard Streamlit est déployé manuellement.
 
 ## Données
 
@@ -94,10 +98,9 @@ SELECT * FROM TABLE(ECON_DB.INFORMATION_SCHEMA.TASK_HISTORY()) ORDER BY SCHEDULE
 Un push sur `main` lance `python -m src.run_sql models ops tests/run_dq.sql`.
 Secrets GitHub à créer (*Settings > Secrets and variables > Actions*) : les 7 variables du `.env`.
 
-
 ## Aperçu
 
-**Dashboard streamlit**
+**Dashboard Streamlit in Snowflake**
 ![Dashboard](docs/us_economy_dashboard.png)
 
 **Lineage de la Dynamic Table**
