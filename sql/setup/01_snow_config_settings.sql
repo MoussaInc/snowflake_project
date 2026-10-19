@@ -36,3 +36,6 @@ GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE_PUBLIC_DATA_FREE TO ROLE ECON_RO
 
 -- 7. BACK TO THE WORKING ROLE (objects created next belong to ECON_ROLE)
 USE ROLE ECON_ROLE;
+
+-- Pour l'app Streamlit, on a besoin de créer un streamlit user et de lui donner les droits d'accès à la base de données et au schéma
+GRANT CREATE STREAMLIT ON SCHEMA ECON_DB.ANALYTICS TO ROLE ECON_ROLE;
